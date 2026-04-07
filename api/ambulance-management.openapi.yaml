@@ -1,0 +1,16 @@
+openapi: 3.0.0
+servers:
+  - description: Cluster Endpoint
+    url: /api
+info:
+  description: Ambulance management for Web-In-Cloud system
+  version: "1.0.0"
+  title: Waiting List Api
+  contact:
+    email: xfedunchyk@stuba.sk, xskrypova@stuba.sk
+  license:
+    name: CC BY 4.0
+    url: "https://creativecommons.org/licenses/by/4.0/"
+tags:
+  - name: ambulanceManagement
+    description: Ambulance Management API
