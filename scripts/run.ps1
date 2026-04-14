@@ -59,6 +59,20 @@ switch ($command) {
             Write-Host "Moved routers.go to handler directory"
         }
 
+        # Fix package name from model/api to handler after moving files
+        Get-ChildItem -Path $HandlerPath -Filter "*.go" | ForEach-Object {
+
+            $filePath = $_.FullName
+            $content = Get-Content $filePath
+
+            # Replace package declaration
+            $updatedContent = $content -replace '^package\s+\w+', 'package handler'
+
+            Set-Content -Path $filePath -Value $updatedContent
+
+            Write-Host "Fixed package name in $($_.Name)"
+        }
+
         Write-Host "Post-processing completed"
     }
 

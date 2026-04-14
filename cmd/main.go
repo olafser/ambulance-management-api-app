@@ -19,6 +19,7 @@ func main() {
 	if !strings.EqualFold(environment, "production") { // case insensitive comparison
 		gin.SetMode(gin.DebugMode)
 	}
+
 	engine := gin.New()
 	engine.Use(gin.Recovery())
 	// request routings
