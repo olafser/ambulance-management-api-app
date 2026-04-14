@@ -1,16 +1,311 @@
-openapi: 3.0.0
+openapi: 3.0.3
 servers:
-  - description: Cluster Endpoint
+  - description: Cluster endpoint
     url: /api
 info:
-  description: Ambulance management for Web-In-Cloud system
+  title: Ambulance Management API
   version: "1.0.0"
-  title: Waiting List Api
+  description: API contract for ambulance management modules including fleet and dispatch management.
   contact:
     email: xfedunchyk@stuba.sk, xskrypova@stuba.sk
   license:
     name: CC BY 4.0
-    url: "https://creativecommons.org/licenses/by/4.0/"
+    url: https://creativecommons.org/licenses/by/4.0/
 tags:
-  - name: ambulanceManagement
-    description: Ambulance Management API
+  - name: Vehicle Management
+    description: Ambulance vehicle management API
+paths:
+  /vehicles:
+    get:
+      tags:
+        - Vehicle Management
+      summary: List ambulance vehicles
+      description: Returns the registered ambulance vehicles with optional filtering by operational status and station.
+      parameters:
+        - in: query
+          name: status
+          schema:
+            $ref: '#/components/schemas/VehicleStatus'
+          description: Filter vehicles by current operational status.
+        - in: query
+          name: station
+          schema:
+            type: string
+          description: Filter vehicles by assigned station.
+      responses:
+        '200':
+          description: Vehicle list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Vehicle'
+    post:
+      tags:
+        - Vehicle Management
+      summary: Register a new ambulance vehicle
+      description: Adds a new ambulance vehicle to the fleet registry.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VehicleCreateRequest'
+      responses:
+        '201':
+          description: Vehicle created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vehicle'
+        '400':
+          description: Invalid vehicle payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Vehicle with the same call sign or plate number already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /vehicles/{vehicleId}:
+    parameters:
+      - in: path
+        name: vehicleId
+        required: true
+        description: Internal vehicle identifier.
+        schema:
+          type: integer
+          format: int64
+    get:
+      tags:
+        - Vehicle Management
+      summary: Get ambulance vehicle detail
+      description: Returns technical and operational detail of a specific ambulance vehicle.
+      responses:
+        '200':
+          description: Vehicle detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vehicle'
+        '404':
+          description: Vehicle not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags:
+        - Vehicle Management
+      summary: Update ambulance vehicle
+      description: Updates editable ambulance vehicle data including technical information and current status.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VehicleUpdateRequest'
+      responses:
+        '200':
+          description: Vehicle updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vehicle'
+        '400':
+          description: Invalid vehicle payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Vehicle not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags:
+        - Vehicle Management
+      summary: Remove ambulance vehicle from registry
+      description: Retires an ambulance vehicle that is no longer in service.
+      responses:
+        '204':
+          description: Vehicle removed
+        '404':
+          description: Vehicle not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /vehicles/{vehicleId}/status:
+    parameters:
+      - in: path
+        name: vehicleId
+        required: true
+        description: Internal vehicle identifier.
+        schema:
+          type: integer
+          format: int64
+    patch:
+      tags:
+        - Vehicle Management
+      summary: Update ambulance vehicle status
+      description: Changes only the operational status of the ambulance vehicle.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VehicleStatusUpdateRequest'
+      responses:
+        '200':
+          description: Vehicle status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vehicle'
+        '400':
+          description: Invalid status update payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Vehicle not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    VehicleStatus:
+      type: string
+      description: Supported vehicle lifecycle and availability states.
+      enum:
+        - AVAILABLE
+        - ON_MISSION
+        - OUT_OF_SERVICE
+        - IN_SERVICE
+    Vehicle:
+      type: object
+      required:
+        - id
+        - callSign
+        - vehicleType
+        - plateNumber
+        - station
+        - assignedCrew
+        - status
+        - mileageKm
+        - lastServiceDate
+        - notes
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 315
+        callSign:
+          type: string
+          maxLength: 30
+          example: AMB-315
+        vehicleType:
+          type: string
+          maxLength: 100
+          example: Type C ambulance
+        plateNumber:
+          type: string
+          maxLength: 20
+          example: TT-194LM
+        station:
+          type: string
+          maxLength: 100
+          example: Trnava North
+        assignedCrew:
+          type: string
+          maxLength: 100
+          example: Kovac / Balaz
+        status:
+          $ref: '#/components/schemas/VehicleStatus'
+        mileageKm:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 72110
+        lastServiceDate:
+          type: string
+          format: date
+          example: 2026-01-28
+        notes:
+          type: string
+          maxLength: 1000
+          example: Assigned to inter-hospital transfer rotation.
+    VehicleCreateRequest:
+      type: object
+      required:
+        - callSign
+        - vehicleType
+        - plateNumber
+        - station
+        - status
+        - mileageKm
+        - lastServiceDate
+      properties:
+        callSign:
+          type: string
+          maxLength: 30
+          example: AMB-402
+        vehicleType:
+          type: string
+          maxLength: 100
+          example: Type B ambulance
+        plateNumber:
+          type: string
+          maxLength: 20
+          example: BA-875XY
+        station:
+          type: string
+          maxLength: 100
+          example: Bratislava Center
+        assignedCrew:
+          type: string
+          maxLength: 100
+          example: Novak / Simko
+          default: Unassigned
+        status:
+          $ref: '#/components/schemas/VehicleStatus'
+        mileageKm:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 12500
+        lastServiceDate:
+          type: string
+          format: date
+          example: 2026-04-01
+        notes:
+          type: string
+          maxLength: 1000
+          example: New backup vehicle for central district.
+    VehicleUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/VehicleCreateRequest'
+    VehicleStatusUpdateRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          $ref: '#/components/schemas/VehicleStatus'
+    Error:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          example: Vehicle not found.
