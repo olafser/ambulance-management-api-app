@@ -17,7 +17,7 @@ $HandlerPath = "${ProjectRoot}/internal/handler"
 switch ($command) {
 
     "start" {
-        go run ${ProjectRoot}/cmd/ambulance-api-service
+        go run ${ProjectRoot}/cmd
     }
 
     "openapi" {
