@@ -8,17 +8,19 @@ if (-not $command) {
 
 $ProjectRoot = "${PSScriptRoot}/.."
 
-$env:AMBULANCE_API_ENVIRONMENT = "Development"
-$env:AMBULANCE_API_PORT = "8080"
-
 $GeneratedPath = "${ProjectRoot}/internal/model"
 $HandlerPath = "${ProjectRoot}/internal/handler"
 
-switch ($command) {
+$env:AMBULANCE_MANAGEMENT_API_PORT = "8080"
+$env:AMBULANCE_MANAGEMENT_API_ENVIRONMENT = "Development"
+$env:AMBULANCE_MANAGEMENT_API_MONGODB_USERNAME="root"
+$env:AMBULANCE_MANAGEMENT_API_MONGODB_PASSWORD="neUhaDnes"
 
-    "start" {
-        go run ${ProjectRoot}/cmd
-    }
+function mongo {
+    docker compose --file ${ProjectRoot}/deployments/docker-compose/compose.yaml $args
+}
+
+switch ($command) {
 
     "openapi" {
 
@@ -74,6 +76,19 @@ switch ($command) {
         }
 
         Write-Host "Post-processing completed"
+    }
+
+    "start" {
+        try {
+            mongo up --detach
+            go run ${ProjectRoot}/cmd
+        } finally {
+            mongo down
+        }
+    }
+
+    "mongo" {
+        mongo up
     }
 
     default {
