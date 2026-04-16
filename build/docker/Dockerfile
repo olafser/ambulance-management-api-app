@@ -36,7 +36,7 @@ RUN CGO_ENABLED=0 GOOS=linux \
       go build \
       -ldflags="-w -s" \
       -installsuffix 'static' \
-      -o ./ambulance-management-webapi-srv ./cmd
+      -o ./ambulance-management-webapi-srv ./cmd/ambulance-api-service
 
 ############################################
 FROM scratch
