@@ -35,7 +35,7 @@ jobs:
         additional-properties: apiPath=internal/model,packageName=model,interfaceOnly=true
 
     - name: Build
-      run: go build -v ./cmd
+      run: go build -v ./cmd/ambulance-api-service
 
     - name: Test
       run: go test -v ./...
