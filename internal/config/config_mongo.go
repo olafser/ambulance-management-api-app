@@ -30,11 +30,11 @@ func LoadMongoConfig() MongoConfig {
 		Port:         getEnv("AMBULANCE_MANAGEMENT_API_MONGODB_PORT", "27017"),
 		Username:     os.Getenv("AMBULANCE_MANAGEMENT_API_MONGODB_USERNAME"),
 		Password:     os.Getenv("AMBULANCE_MANAGEMENT_API_MONGODB_PASSWORD"),
-		Database:     "ambulance_management",
+		Database:     getEnv("AMBULANCE_MANAGEMENT_API_MONGODB_DATABASE", "ambulance_management"),
 		Timeout:      time.Duration(timeoutSeconds) * time.Second,
 		AuthSource:   "admin",
-		VehiclesColl: "vehicles",
-		CountersColl: "counters",
+		VehiclesColl: getEnv("AMBULANCE_MANAGEMENT_API_MONGODB_VEHICLES_COLLECTION", "vehicles"),
+		CountersColl: getEnv("AMBULANCE_MANAGEMENT_API_MONGODB_COUNTERS_COLLECTION", "counters"),
 	}
 }
 
