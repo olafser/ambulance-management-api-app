@@ -92,6 +92,10 @@ switch ($command) {
         mongo up
     }
 
+    "docker" {
+         docker build -t myrres/ambulance-management-webapi:local-build -f ${ProjectRoot}/build/docker/Dockerfile .
+    }
+
     "test" {
         go test -v ./...
     }
