@@ -11,6 +11,7 @@ $ProjectRoot = "${PSScriptRoot}/.."
 $GeneratedPath = "${ProjectRoot}/internal/model"
 $HandlerPath = "${ProjectRoot}/internal/handler"
 
+# local environment variables for development purposes ONLY
 $env:AMBULANCE_MANAGEMENT_API_PORT = "8080"
 $env:AMBULANCE_MANAGEMENT_API_ENVIRONMENT = "Development"
 $env:AMBULANCE_MANAGEMENT_API_MONGODB_USERNAME="root"
