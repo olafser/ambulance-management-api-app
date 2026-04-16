@@ -102,7 +102,7 @@ func (h *apiVehicleManagementImpl) VehiclesVehicleIdPut(c *gin.Context) {
 }
 
 func (h *apiVehicleManagementImpl) VehiclesVehicleIdStatusPatch(c *gin.Context) {
-	id, err := parseVehicleID(c.Param("vehiceId"))
+	id, err := parseVehicleID(c.Param("vehicleId"))
 	if err != nil {
 		respondWithBadRequest(c, err.Error())
 		return
