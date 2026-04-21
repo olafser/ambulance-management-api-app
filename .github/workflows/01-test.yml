@@ -1,0 +1,33 @@
+name: test
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get Go version from go.mod
+        id: get_go_version
+        run: echo "go_version=$(grep -m1 'go ' go.mod | awk '{print $2}')" >> $GITHUB_OUTPUT
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ steps.get_go_version.outputs.go_version }}
+
+      - name: Generate api controllers interfaces
+        uses: craicoverflow/openapi-generator-generate-action@v1.2.1
+        with:
+          generator: go-gin-server
+          input: api/ambulance-management.openapi.yaml
+          additional-properties: apiPath=internal/model,packageName=model,interfaceOnly=true
+
+      - name: Build
+        run: go build -v ./cmd/ambulance-api-service
+
+      - name: Test
+        run: go test -v ./...
