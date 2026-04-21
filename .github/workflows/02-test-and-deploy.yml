@@ -1,4 +1,4 @@
-name: Test and Deploy WebAPI Container Image
+name: test-and-deploy
 
 on:
   workflow_dispatch:
