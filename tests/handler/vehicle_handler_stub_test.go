@@ -64,6 +64,10 @@ func buildVehicleRouter(svc service.VehicleService) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	engine := gin.New()
 	vehicleHandler := handler.NewVehicleManagementAPI(svc)
-	handler.NewRouterWithGinEngine(engine, handler.ApiHandleFunctions{VehicleManagementAPI: vehicleHandler})
+	dispatchHandler := handler.NewDispatchManagementAPI(dispatchServiceStub{})
+	handler.NewRouterWithGinEngine(engine, handler.ApiHandleFunctions{
+		DispatchManagementAPI: dispatchHandler,
+		VehicleManagementAPI:  vehicleHandler,
+	})
 	return engine
 }

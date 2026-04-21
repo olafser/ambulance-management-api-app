@@ -8,15 +8,16 @@ import (
 )
 
 type MongoConfig struct {
-	Host         string
-	Port         string
-	Username     string
-	Password     string
-	Database     string
-	Timeout      time.Duration
-	AuthSource   string
-	VehiclesColl string
-	CountersColl string
+	Host           string
+	Port           string
+	Username       string
+	Password       string
+	Database       string
+	Timeout        time.Duration
+	AuthSource     string
+	VehiclesColl   string
+	DispatchesColl string
+	CountersColl   string
 }
 
 func LoadMongoConfig() MongoConfig {
@@ -26,15 +27,16 @@ func LoadMongoConfig() MongoConfig {
 	}
 
 	return MongoConfig{
-		Host:         getEnv("AMBULANCE_MANAGEMENT_API_MONGODB_HOST", "localhost"),
-		Port:         getEnv("AMBULANCE_MANAGEMENT_API_MONGODB_PORT", "27017"),
-		Username:     os.Getenv("AMBULANCE_MANAGEMENT_API_MONGODB_USERNAME"),
-		Password:     os.Getenv("AMBULANCE_MANAGEMENT_API_MONGODB_PASSWORD"),
-		Database:     getEnv("AMBULANCE_MANAGEMENT_API_MONGODB_DATABASE", "ambulance_management"),
-		Timeout:      time.Duration(timeoutSeconds) * time.Second,
-		AuthSource:   "admin",
-		VehiclesColl: getEnv("AMBULANCE_MANAGEMENT_API_MONGODB_VEHICLES_COLLECTION", "vehicles"),
-		CountersColl: getEnv("AMBULANCE_MANAGEMENT_API_MONGODB_COUNTERS_COLLECTION", "counters"),
+		Host:           getEnv("AMBULANCE_MANAGEMENT_API_MONGODB_HOST", "localhost"),
+		Port:           getEnv("AMBULANCE_MANAGEMENT_API_MONGODB_PORT", "27017"),
+		Username:       os.Getenv("AMBULANCE_MANAGEMENT_API_MONGODB_USERNAME"),
+		Password:       os.Getenv("AMBULANCE_MANAGEMENT_API_MONGODB_PASSWORD"),
+		Database:       getEnv("AMBULANCE_MANAGEMENT_API_MONGODB_DATABASE", "ambulance_management"),
+		Timeout:        time.Duration(timeoutSeconds) * time.Second,
+		AuthSource:     "admin",
+		VehiclesColl:   getEnv("AMBULANCE_MANAGEMENT_API_MONGODB_VEHICLES_COLLECTION", "vehicles"),
+		DispatchesColl: getEnv("AMBULANCE_MANAGEMENT_API_MONGODB_DISPATCHES_COLLECTION", "dispatches"),
+		CountersColl:   getEnv("AMBULANCE_MANAGEMENT_API_MONGODB_COUNTERS_COLLECTION", "counters"),
 	}
 }
 

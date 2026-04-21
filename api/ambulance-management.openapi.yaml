@@ -13,7 +13,9 @@ info:
     url: https://creativecommons.org/licenses/by/4.0/
 tags:
   - name: Vehicle Management
-    description: Ambulance vehicle management API
+    description: Ambulance vehicle management API.
+  - name: Dispatch Management
+    description: Ambulance dispatch management API.
 paths:
   /vehicles:
     get:
@@ -181,6 +183,172 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /dispatches:
+    get:
+      tags:
+        - Dispatch Management
+      summary: List ambulance dispatches
+      description: Returns current and historical ambulance dispatches with optional filtering by status and city.
+      parameters:
+        - in: query
+          name: status
+          schema:
+            $ref: '#/components/schemas/DispatchStatus'
+          description: Filter dispatches by current workflow status.
+        - in: query
+          name: city
+          schema:
+            type: string
+          description: Filter dispatches by city of the incident.
+      responses:
+        '200':
+          description: Dispatch list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Dispatch'
+    post:
+      tags:
+        - Dispatch Management
+      summary: Create ambulance dispatch
+      description: Creates a new ambulance dispatch request for a patient incident.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DispatchCreateRequest'
+      responses:
+        '201':
+          description: Dispatch created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dispatch'
+        '400':
+          description: Invalid dispatch payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Dispatch with the same incident number already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /dispatches/{dispatchId}:
+    parameters:
+      - in: path
+        name: dispatchId
+        required: true
+        description: Internal dispatch identifier.
+        schema:
+          type: integer
+          format: int64
+    get:
+      tags:
+        - Dispatch Management
+      summary: Get ambulance dispatch detail
+      description: Returns detail of a specific ambulance dispatch.
+      responses:
+        '200':
+          description: Dispatch detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dispatch'
+        '404':
+          description: Dispatch not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags:
+        - Dispatch Management
+      summary: Update ambulance dispatch
+      description: Updates the editable dispatch data for an existing ambulance mission.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DispatchUpdateRequest'
+      responses:
+        '200':
+          description: Dispatch updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dispatch'
+        '400':
+          description: Invalid dispatch payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Dispatch not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags:
+        - Dispatch Management
+      summary: Cancel ambulance dispatch
+      description: Cancels a dispatch that was created by mistake or is no longer needed.
+      responses:
+        '204':
+          description: Dispatch cancelled
+        '404':
+          description: Dispatch not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /dispatches/{dispatchId}/status:
+    parameters:
+      - in: path
+        name: dispatchId
+        required: true
+        description: Internal dispatch identifier.
+        schema:
+          type: integer
+          format: int64
+    patch:
+      tags:
+        - Dispatch Management
+      summary: Update ambulance dispatch status
+      description: Updates only the operational status of a dispatch.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DispatchStatusUpdateRequest'
+      responses:
+        '200':
+          description: Dispatch status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dispatch'
+        '400':
+          description: Invalid dispatch status payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Dispatch not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   schemas:
     VehicleStatus:
@@ -301,6 +469,172 @@ components:
       properties:
         status:
           $ref: '#/components/schemas/VehicleStatus'
+    DispatchStatus:
+      type: string
+      description: Supported ambulance dispatch workflow states.
+      enum:
+        - ACCEPTED
+        - EN_ROUTE
+        - ON_SCENE
+        - TRANSPORTING_TO_HOSPITAL
+        - COMPLETED
+    DispatchPriority:
+      type: string
+      description: Triage priority assigned to the dispatch.
+      enum:
+        - LOW
+        - MEDIUM
+        - HIGH
+        - CRITICAL
+    Dispatch:
+      type: object
+      required:
+        - id
+        - incidentNumber
+        - callerName
+        - patientName
+        - streetAddress
+        - city
+        - dispatchReason
+        - priority
+        - status
+        - ambulanceCallSign
+        - destinationHospital
+        - dispatcherName
+        - createdAt
+        - updatedAt
+        - notes
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 8105
+        incidentNumber:
+          type: string
+          maxLength: 40
+          example: DIS-2026-0042
+        callerName:
+          type: string
+          maxLength: 120
+          example: Jana Moravcikova
+        patientName:
+          type: string
+          maxLength: 120
+          example: Peter Novy
+        streetAddress:
+          type: string
+          maxLength: 200
+          example: Hlavna 19
+        city:
+          type: string
+          maxLength: 120
+          example: Trnava
+        dispatchReason:
+          type: string
+          maxLength: 500
+          example: Chest pain and shortness of breath.
+        priority:
+          $ref: '#/components/schemas/DispatchPriority'
+        status:
+          $ref: '#/components/schemas/DispatchStatus'
+        ambulanceCallSign:
+          type: string
+          maxLength: 40
+          example: AMB-204
+        destinationHospital:
+          type: string
+          maxLength: 150
+          example: Fakultna nemocnica Trnava
+        dispatcherName:
+          type: string
+          maxLength: 120
+          example: Martina Horvathova
+        createdAt:
+          type: string
+          format: date-time
+          example: '2026-04-20T08:15:00Z'
+        updatedAt:
+          type: string
+          format: date-time
+          example: '2026-04-20T08:32:00Z'
+        notes:
+          type: string
+          maxLength: 1000
+          example: Patient is conscious, second floor apartment, elevator available.
+    DispatchCreateRequest:
+      type: object
+      required:
+        - incidentNumber
+        - callerName
+        - patientName
+        - streetAddress
+        - city
+        - dispatchReason
+        - priority
+        - status
+        - ambulanceCallSign
+        - destinationHospital
+        - dispatcherName
+        - createdAt
+      properties:
+        incidentNumber:
+          type: string
+          maxLength: 40
+          example: DIS-2026-0060
+        callerName:
+          type: string
+          maxLength: 120
+          example: Tomas Varga
+        patientName:
+          type: string
+          maxLength: 120
+          example: Eva Vargova
+        streetAddress:
+          type: string
+          maxLength: 200
+          example: Bernolakova 8
+        city:
+          type: string
+          maxLength: 120
+          example: Nitra
+        dispatchReason:
+          type: string
+          maxLength: 500
+          example: Fall with possible head injury.
+        priority:
+          $ref: '#/components/schemas/DispatchPriority'
+        status:
+          $ref: '#/components/schemas/DispatchStatus'
+        ambulanceCallSign:
+          type: string
+          maxLength: 40
+          example: AMB-118
+        destinationHospital:
+          type: string
+          maxLength: 150
+          example: Fakultna nemocnica Nitra
+        dispatcherName:
+          type: string
+          maxLength: 120
+          example: Lucia Kmetova
+        createdAt:
+          type: string
+          format: date-time
+          example: '2026-04-20T09:05:00Z'
+        notes:
+          type: string
+          maxLength: 1000
+          example: Caller reports significant bleeding from scalp.
+    DispatchUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/DispatchCreateRequest'
+    DispatchStatusUpdateRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          $ref: '#/components/schemas/DispatchStatus'
     Error:
       type: object
       required:

@@ -41,8 +41,14 @@ func main() {
 	if err != nil {
 		log.Fatalf("Vehicle repository init failed: %v", err)
 	}
+	dispatchRepository, err := repository.NewDispatchRepository(mongoClient.Database(mongoConfig.Database), mongoConfig)
+	if err != nil {
+		log.Fatalf("Dispatch repository init failed: %v", err)
+	}
 	vehicleService := service.NewVehicleService(vehicleRepository)
+	dispatchService := service.NewDispatchService(dispatchRepository)
 	vehicleHandler := handler.NewVehicleManagementAPI(vehicleService)
+	dispatchHandler := handler.NewDispatchManagementAPI(dispatchService)
 
 	engine := gin.New()
 	engine.Use(gin.Recovery())
@@ -53,7 +59,10 @@ func main() {
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: false,
 	}))
-	handler.NewRouterWithGinEngine(engine, handler.ApiHandleFunctions{VehicleManagementAPI: vehicleHandler})
+	handler.NewRouterWithGinEngine(engine, handler.ApiHandleFunctions{
+		DispatchManagementAPI: dispatchHandler,
+		VehicleManagementAPI:  vehicleHandler,
+	})
 	// request routings
 	engine.GET("/openapi", api.HandleOpenApi)
 	engine.Run(":" + port)

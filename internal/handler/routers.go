@@ -63,12 +63,50 @@ func DefaultHandleFunc(c *gin.Context) {
 
 type ApiHandleFunctions struct {
 
+	// Routes for the DispatchManagementAPI part of the API
+	DispatchManagementAPI DispatchManagementAPI
 	// Routes for the VehicleManagementAPI part of the API
 	VehicleManagementAPI VehicleManagementAPI
 }
 
 func getRoutes(handleFunctions ApiHandleFunctions) []Route {
 	return []Route{
+		{
+			"DispatchesDispatchIdDelete",
+			http.MethodDelete,
+			"/api/dispatches/:dispatchId",
+			handleFunctions.DispatchManagementAPI.DispatchesDispatchIdDelete,
+		},
+		{
+			"DispatchesDispatchIdGet",
+			http.MethodGet,
+			"/api/dispatches/:dispatchId",
+			handleFunctions.DispatchManagementAPI.DispatchesDispatchIdGet,
+		},
+		{
+			"DispatchesDispatchIdPut",
+			http.MethodPut,
+			"/api/dispatches/:dispatchId",
+			handleFunctions.DispatchManagementAPI.DispatchesDispatchIdPut,
+		},
+		{
+			"DispatchesDispatchIdStatusPatch",
+			http.MethodPatch,
+			"/api/dispatches/:dispatchId/status",
+			handleFunctions.DispatchManagementAPI.DispatchesDispatchIdStatusPatch,
+		},
+		{
+			"DispatchesGet",
+			http.MethodGet,
+			"/api/dispatches",
+			handleFunctions.DispatchManagementAPI.DispatchesGet,
+		},
+		{
+			"DispatchesPost",
+			http.MethodPost,
+			"/api/dispatches",
+			handleFunctions.DispatchManagementAPI.DispatchesPost,
+		},
 		{
 			"VehiclesGet",
 			http.MethodGet,
