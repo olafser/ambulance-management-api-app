@@ -8,12 +8,13 @@ import (
 )
 
 type vehicleRepoStub struct {
-	listFn         func(ctx context.Context, status, station string) ([]entity.VehicleEntity, error)
-	createFn       func(ctx context.Context, vehicle entity.VehicleEntity) (entity.VehicleEntity, error)
-	getByIDFn      func(ctx context.Context, vehicleID int64) (entity.VehicleEntity, error)
-	updateByIDFn   func(ctx context.Context, vehicleID int64, vehicle entity.VehicleEntity) (entity.VehicleEntity, error)
-	updateStatusFn func(ctx context.Context, vehicleID int64, status string) (entity.VehicleEntity, error)
-	deleteByIDFn   func(ctx context.Context, vehicleID int64) error
+	listFn          func(ctx context.Context, status, station string) ([]entity.VehicleEntity, error)
+	createFn        func(ctx context.Context, vehicle entity.VehicleEntity) (entity.VehicleEntity, error)
+	getByIDFn       func(ctx context.Context, vehicleID int64) (entity.VehicleEntity, error)
+	getByCallSignFn func(ctx context.Context, callSign string) (entity.VehicleEntity, error)
+	updateByIDFn    func(ctx context.Context, vehicleID int64, vehicle entity.VehicleEntity) (entity.VehicleEntity, error)
+	updateStatusFn  func(ctx context.Context, vehicleID int64, status string) (entity.VehicleEntity, error)
+	deleteByIDFn    func(ctx context.Context, vehicleID int64) error
 }
 
 func (s vehicleRepoStub) List(ctx context.Context, status, station string) ([]entity.VehicleEntity, error) {
@@ -33,6 +34,13 @@ func (s vehicleRepoStub) Create(ctx context.Context, vehicle entity.VehicleEntit
 func (s vehicleRepoStub) GetByID(ctx context.Context, vehicleID int64) (entity.VehicleEntity, error) {
 	if s.getByIDFn != nil {
 		return s.getByIDFn(ctx, vehicleID)
+	}
+	return entity.VehicleEntity{}, nil
+}
+
+func (s vehicleRepoStub) GetByCallSign(ctx context.Context, callSign string) (entity.VehicleEntity, error) {
+	if s.getByCallSignFn != nil {
+		return s.getByCallSignFn(ctx, callSign)
 	}
 	return entity.VehicleEntity{}, nil
 }
