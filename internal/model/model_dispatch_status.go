@@ -16,7 +16,7 @@ type DispatchStatus string
 // List of DispatchStatus
 const (
 	ACCEPTED                 DispatchStatus = "ACCEPTED"
-	EN_ROUTE                 DispatchStatus = "EN_ROUTE"
+	ON_ROUTE                 DispatchStatus = "ON_ROUTE"
 	ON_SCENE                 DispatchStatus = "ON_SCENE"
 	TRANSPORTING_TO_HOSPITAL DispatchStatus = "TRANSPORTING_TO_HOSPITAL"
 	COMPLETED                DispatchStatus = "COMPLETED"

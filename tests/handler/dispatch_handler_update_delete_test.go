@@ -21,7 +21,7 @@ func TestDispatchesDispatchIdPut_UsesPathIDAndReturnsUpdatedDispatch(t *testing.
 		},
 	})
 
-	payload := []byte(`{"incidentNumber":"DIS-2026-0002","callerName":"Caller","patientName":"Patient","streetAddress":"Main 2","city":"Nitra","dispatchReason":"Injury","priority":"MEDIUM","status":"EN_ROUTE","ambulanceCallSign":"AMB-02","destinationHospital":"Hospital","dispatcherName":"Operator","createdAt":"2026-04-20T10:00:00Z"}`)
+	payload := []byte(`{"incidentNumber":"DIS-2026-0002","callerName":"Caller","patientName":"Patient","streetAddress":"Main 2","city":"Nitra","dispatchReason":"Injury","priority":"MEDIUM","status":"ON_ROUTE","ambulanceCallSign":"AMB-02","destinationHospital":"Hospital","dispatcherName":"Operator","createdAt":"2026-04-20T10:00:00Z"}`)
 	req := httptest.NewRequest(http.MethodPut, "/api/dispatches/8", bytes.NewReader(payload))
 	req.Header.Set("Content-Type", "application/json")
 	res := httptest.NewRecorder()

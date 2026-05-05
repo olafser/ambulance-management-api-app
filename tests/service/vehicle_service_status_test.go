@@ -11,6 +11,9 @@ import (
 
 func TestVehicleServiceUpdateStatusByID_UpdatesStatus(t *testing.T) {
 	svc := service.NewVehicleService(vehicleRepoStub{
+		getByIDFn: func(ctx context.Context, vehicleID int64) (entity.VehicleEntity, error) {
+			return entity.VehicleEntity{VehicleID: vehicleID, Status: string(model.AVAILABLE), CallSign: "A-101"}, nil
+		},
 		updateStatusFn: func(ctx context.Context, vehicleID int64, status string) (entity.VehicleEntity, error) {
 			return entity.VehicleEntity{VehicleID: vehicleID, Status: status, CallSign: "A-101"}, nil
 		},

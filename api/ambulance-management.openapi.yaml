@@ -144,45 +144,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /vehicles/{vehicleId}/status:
-    parameters:
-      - in: path
-        name: vehicleId
-        required: true
-        description: Internal vehicle identifier.
-        schema:
-          type: integer
-          format: int64
-    patch:
-      tags:
-        - Vehicle Management
-      summary: Update ambulance vehicle status
-      description: Changes only the operational status of the ambulance vehicle.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/VehicleStatusUpdateRequest'
-      responses:
-        '200':
-          description: Vehicle status updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Vehicle'
-        '400':
-          description: Invalid status update payload
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Vehicle not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
   /dispatches:
     get:
       tags:
@@ -462,19 +423,12 @@ components:
     VehicleUpdateRequest:
       allOf:
         - $ref: '#/components/schemas/VehicleCreateRequest'
-    VehicleStatusUpdateRequest:
-      type: object
-      required:
-        - status
-      properties:
-        status:
-          $ref: '#/components/schemas/VehicleStatus'
     DispatchStatus:
       type: string
       description: Supported ambulance dispatch workflow states.
       enum:
         - ACCEPTED
-        - EN_ROUTE
+        - ON_ROUTE
         - ON_SCENE
         - TRANSPORTING_TO_HOSPITAL
         - COMPLETED

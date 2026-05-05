@@ -35,8 +35,4 @@ type VehicleManagementAPI interface {
 	// VehiclesVehicleIdPut Put /api/vehicles/:vehicleId
 	// Update ambulance vehicle
 	VehiclesVehicleIdPut(c *gin.Context)
-
-	// VehiclesVehicleIdStatusPatch Patch /api/vehicles/:vehicleId/status
-	// Update ambulance vehicle status
-	VehiclesVehicleIdStatusPatch(c *gin.Context)
 }

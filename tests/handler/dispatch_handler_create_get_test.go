@@ -76,7 +76,7 @@ func TestDispatchesDispatchIdGet_ReturnsDispatch(t *testing.T) {
 	now := time.Now().UTC()
 	router := buildDispatchRouter(dispatchServiceStub{
 		getByIDFn: func(ctx context.Context, dispatchID int64) (model.Dispatch, error) {
-			return model.Dispatch{Id: dispatchID, IncidentNumber: "DIS-1", Status: model.EN_ROUTE, CreatedAt: now, UpdatedAt: now}, nil
+			return model.Dispatch{Id: dispatchID, IncidentNumber: "DIS-1", Status: model.ON_ROUTE, CreatedAt: now, UpdatedAt: now}, nil
 		},
 	})
 

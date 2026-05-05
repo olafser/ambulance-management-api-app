@@ -137,11 +137,5 @@ func getRoutes(handleFunctions ApiHandleFunctions) []Route {
 			"/api/vehicles/:vehicleId",
 			handleFunctions.VehicleManagementAPI.VehiclesVehicleIdPut,
 		},
-		{
-			"VehiclesVehicleIdStatusPatch",
-			http.MethodPatch,
-			"/api/vehicles/:vehicleId/status",
-			handleFunctions.VehicleManagementAPI.VehiclesVehicleIdStatusPatch,
-		},
 	}
 }
