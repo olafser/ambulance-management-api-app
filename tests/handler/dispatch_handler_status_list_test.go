@@ -22,7 +22,7 @@ func TestDispatchesGet_PassesFiltersToService(t *testing.T) {
 		},
 	})
 
-	req := httptest.NewRequest(http.MethodGet, "/api/dispatches?status=EN_ROUTE&city=Nitra", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/dispatches?status=ON_ROUTE&city=Nitra", nil)
 	res := httptest.NewRecorder()
 
 	router.ServeHTTP(res, req)
@@ -30,7 +30,7 @@ func TestDispatchesGet_PassesFiltersToService(t *testing.T) {
 	if res.Code != http.StatusOK {
 		t.Fatalf("expected status %d, got %d", http.StatusOK, res.Code)
 	}
-	if capturedStatus != "EN_ROUTE" || capturedCity != "Nitra" {
+	if capturedStatus != "ON_ROUTE" || capturedCity != "Nitra" {
 		t.Fatalf("unexpected query propagation: status=%s city=%s", capturedStatus, capturedCity)
 	}
 }

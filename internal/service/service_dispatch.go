@@ -154,7 +154,7 @@ func validateDispatchUpdateRequest(req model.DispatchUpdateRequest) error {
 
 func isValidDispatchStatus(status model.DispatchStatus) bool {
 	switch status {
-	case model.ACCEPTED, model.EN_ROUTE, model.ON_SCENE, model.TRANSPORTING_TO_HOSPITAL, model.COMPLETED:
+	case model.ACCEPTED, model.ON_ROUTE, model.ON_SCENE, model.TRANSPORTING_TO_HOSPITAL, model.COMPLETED:
 		return true
 	default:
 		return false

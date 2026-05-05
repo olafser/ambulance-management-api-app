@@ -474,7 +474,7 @@ components:
       description: Supported ambulance dispatch workflow states.
       enum:
         - ACCEPTED
-        - EN_ROUTE
+        - ON_ROUTE
         - ON_SCENE
         - TRANSPORTING_TO_HOSPITAL
         - COMPLETED
