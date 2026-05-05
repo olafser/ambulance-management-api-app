@@ -107,6 +107,14 @@ func (s *serviceDispatch) DeleteByID(ctx context.Context, dispatchID int64) erro
 		return fmt.Errorf("%w: dispatchId must be positive", ErrBadRequest)
 	}
 
+	dispatch, err := s.repo.GetByID(ctx, dispatchID)
+	if err != nil {
+		return translateDispatchRepoErr(err)
+	}
+	if dispatch.Status != string(model.COMPLETED) {
+		return fmt.Errorf("%w: dispatch must be completed before deletion", ErrBadRequest)
+	}
+
 	if err := s.repo.DeleteByID(ctx, dispatchID); err != nil {
 		return translateDispatchRepoErr(err)
 	}
