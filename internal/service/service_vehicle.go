@@ -26,11 +26,16 @@ type VehicleService interface {
 }
 
 type serviceVehicle struct {
-	repo repository.VehicleRepository
+	repo         repository.VehicleRepository
+	dispatchRepo repository.DispatchRepository
 }
 
-func NewVehicleService(repo repository.VehicleRepository) VehicleService {
-	return &serviceVehicle{repo: repo}
+func NewVehicleService(repo repository.VehicleRepository, dispatchRepo ...repository.DispatchRepository) VehicleService {
+	var cleanupRepo repository.DispatchRepository
+	if len(dispatchRepo) > 0 {
+		cleanupRepo = dispatchRepo[0]
+	}
+	return &serviceVehicle{repo: repo, dispatchRepo: cleanupRepo}
 }
 
 func (s *serviceVehicle) List(ctx context.Context, status, station string) ([]model.Vehicle, error) {
@@ -81,6 +86,14 @@ func (s *serviceVehicle) UpdateByID(ctx context.Context, vehicleID int64, req mo
 		return model.Vehicle{}, err
 	}
 
+	current, err := s.repo.GetByID(ctx, vehicleID)
+	if err != nil {
+		return model.Vehicle{}, translateRepoErr(err)
+	}
+	if current.Status == string(model.ON_MISSION) && req.Status != model.VehicleStatus(current.Status) {
+		return model.Vehicle{}, fmt.Errorf("%w: vehicle status cannot be changed while on mission", ErrBadRequest)
+	}
+
 	entity := mapper.ToVehicleEntityFromUpdate(vehicleID, req)
 	updated, err := s.repo.UpdateByID(ctx, vehicleID, entity)
 	if err != nil {
@@ -98,6 +111,14 @@ func (s *serviceVehicle) UpdateStatusByID(ctx context.Context, vehicleID int64, 
 		return model.Vehicle{}, fmt.Errorf("%w: invalid status value", ErrBadRequest)
 	}
 
+	current, err := s.repo.GetByID(ctx, vehicleID)
+	if err != nil {
+		return model.Vehicle{}, translateRepoErr(err)
+	}
+	if current.Status == string(model.ON_MISSION) && req.Status != model.VehicleStatus(current.Status) {
+		return model.Vehicle{}, fmt.Errorf("%w: vehicle status cannot be changed while on mission", ErrBadRequest)
+	}
+
 	updated, err := s.repo.UpdateStatusByID(ctx, vehicleID, string(req.Status))
 	if err != nil {
 		return model.Vehicle{}, translateRepoErr(err)
@@ -109,6 +130,17 @@ func (s *serviceVehicle) UpdateStatusByID(ctx context.Context, vehicleID int64, 
 func (s *serviceVehicle) DeleteByID(ctx context.Context, vehicleID int64) error {
 	if vehicleID <= 0 {
 		return fmt.Errorf("%w: vehicleId must be positive", ErrBadRequest)
+	}
+
+	vehicle, err := s.repo.GetByID(ctx, vehicleID)
+	if err != nil {
+		return translateRepoErr(err)
+	}
+
+	if s.dispatchRepo != nil {
+		if err := s.dispatchRepo.DeleteUnfinishedByVehicleCallSign(ctx, vehicle.CallSign); err != nil {
+			return translateDispatchRepoErr(err)
+		}
 	}
 
 	if err := s.repo.DeleteByID(ctx, vehicleID); err != nil {

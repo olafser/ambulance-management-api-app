@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/olafser/ambulance-management-api-app/internal/entity"
 	"github.com/olafser/ambulance-management-api-app/internal/mapper"
 	"github.com/olafser/ambulance-management-api-app/internal/model"
 	"github.com/olafser/ambulance-management-api-app/internal/repository"
@@ -22,11 +23,12 @@ type DispatchService interface {
 }
 
 type serviceDispatch struct {
-	repo repository.DispatchRepository
+	dispatchRepo repository.DispatchRepository
+	vehicleRepo  repository.VehicleRepository
 }
 
-func NewDispatchService(repo repository.DispatchRepository) DispatchService {
-	return &serviceDispatch{repo: repo}
+func NewDispatchService(dispatchRepo repository.DispatchRepository, vehicleRepo repository.VehicleRepository) DispatchService {
+	return &serviceDispatch{dispatchRepo: dispatchRepo, vehicleRepo: vehicleRepo}
 }
 
 func (s *serviceDispatch) List(ctx context.Context, status, city string) ([]model.Dispatch, error) {
@@ -34,7 +36,7 @@ func (s *serviceDispatch) List(ctx context.Context, status, city string) ([]mode
 		return nil, fmt.Errorf("%w: invalid status filter", ErrBadRequest)
 	}
 
-	items, err := s.repo.List(ctx, status, city)
+	items, err := s.dispatchRepo.List(ctx, status, city)
 	if err != nil {
 		return nil, err
 	}
@@ -47,10 +49,23 @@ func (s *serviceDispatch) Create(ctx context.Context, req model.DispatchCreateRe
 		return model.Dispatch{}, err
 	}
 
-	entity := mapper.ToDispatchEntityFromCreate(0, req)
-	created, err := s.repo.Create(ctx, entity)
+	vehicle, err := s.getVehicleByCallSign(ctx, req.AmbulanceCallSign)
+	if err != nil {
+		return model.Dispatch{}, err
+	}
+	if vehicle.Status != string(model.AVAILABLE) {
+		return model.Dispatch{}, fmt.Errorf("%w: ambulance vehicle must be available", ErrBadRequest)
+	}
+
+	dispatchEntity := mapper.ToDispatchEntityFromCreate(0, req)
+	created, err := s.dispatchRepo.Create(ctx, dispatchEntity)
 	if err != nil {
 		return model.Dispatch{}, translateDispatchRepoErr(err)
+	}
+
+	if err := s.setVehicleStatusByCallSign(ctx, req.AmbulanceCallSign, model.ON_MISSION); err != nil {
+		_ = s.dispatchRepo.DeleteByID(ctx, created.DispatchID)
+		return model.Dispatch{}, err
 	}
 
 	return mapper.ToDispatchModel(created), nil
@@ -61,7 +76,7 @@ func (s *serviceDispatch) GetByID(ctx context.Context, dispatchID int64) (model.
 		return model.Dispatch{}, fmt.Errorf("%w: dispatchId must be positive", ErrBadRequest)
 	}
 
-	item, err := s.repo.GetByID(ctx, dispatchID)
+	item, err := s.dispatchRepo.GetByID(ctx, dispatchID)
 	if err != nil {
 		return model.Dispatch{}, translateDispatchRepoErr(err)
 	}
@@ -77,10 +92,32 @@ func (s *serviceDispatch) UpdateByID(ctx context.Context, dispatchID int64, req 
 		return model.Dispatch{}, err
 	}
 
-	entity := mapper.ToDispatchEntityFromUpdate(dispatchID, req, time.Now().UTC())
-	updated, err := s.repo.UpdateByID(ctx, dispatchID, entity)
+	current, err := s.dispatchRepo.GetByID(ctx, dispatchID)
 	if err != nil {
 		return model.Dispatch{}, translateDispatchRepoErr(err)
+	}
+	if current.Status == string(model.COMPLETED) && req.Status != model.COMPLETED {
+		if err := s.ensureVehicleAvailable(ctx, req.AmbulanceCallSign); err != nil {
+			return model.Dispatch{}, err
+		}
+	}
+
+	dispatchEntity := mapper.ToDispatchEntityFromUpdate(dispatchID, req, time.Now().UTC())
+	updated, err := s.dispatchRepo.UpdateByID(ctx, dispatchID, dispatchEntity)
+	if err != nil {
+		return model.Dispatch{}, translateDispatchRepoErr(err)
+	}
+	if current.Status == string(model.COMPLETED) && req.Status != model.COMPLETED {
+		if err := s.setVehicleStatusByCallSign(ctx, updated.AmbulanceCallSign, model.ON_MISSION); err != nil {
+			_, _ = s.dispatchRepo.UpdateByID(ctx, dispatchID, current)
+			return model.Dispatch{}, err
+		}
+	}
+	if req.Status == model.COMPLETED {
+		if err := s.releaseVehicle(ctx, updated.AmbulanceCallSign); err != nil {
+			_, _ = s.dispatchRepo.UpdateByID(ctx, dispatchID, current)
+			return model.Dispatch{}, err
+		}
 	}
 
 	return mapper.ToDispatchModel(updated), nil
@@ -94,9 +131,31 @@ func (s *serviceDispatch) UpdateStatusByID(ctx context.Context, dispatchID int64
 		return model.Dispatch{}, fmt.Errorf("%w: invalid status value", ErrBadRequest)
 	}
 
-	updated, err := s.repo.UpdateStatusByID(ctx, dispatchID, string(req.Status), time.Now().UTC())
+	current, err := s.dispatchRepo.GetByID(ctx, dispatchID)
 	if err != nil {
 		return model.Dispatch{}, translateDispatchRepoErr(err)
+	}
+	if current.Status == string(model.COMPLETED) && req.Status != model.COMPLETED {
+		if err := s.ensureVehicleAvailable(ctx, current.AmbulanceCallSign); err != nil {
+			return model.Dispatch{}, err
+		}
+	}
+
+	updated, err := s.dispatchRepo.UpdateStatusByID(ctx, dispatchID, string(req.Status), time.Now().UTC())
+	if err != nil {
+		return model.Dispatch{}, translateDispatchRepoErr(err)
+	}
+	if current.Status == string(model.COMPLETED) && req.Status != model.COMPLETED {
+		if err := s.setVehicleStatusByCallSign(ctx, updated.AmbulanceCallSign, model.ON_MISSION); err != nil {
+			_, _ = s.dispatchRepo.UpdateStatusByID(ctx, dispatchID, current.Status, time.Now().UTC())
+			return model.Dispatch{}, err
+		}
+	}
+	if req.Status == model.COMPLETED {
+		if err := s.releaseVehicle(ctx, updated.AmbulanceCallSign); err != nil {
+			_, _ = s.dispatchRepo.UpdateStatusByID(ctx, dispatchID, current.Status, time.Now().UTC())
+			return model.Dispatch{}, err
+		}
 	}
 
 	return mapper.ToDispatchModel(updated), nil
@@ -107,7 +166,7 @@ func (s *serviceDispatch) DeleteByID(ctx context.Context, dispatchID int64) erro
 		return fmt.Errorf("%w: dispatchId must be positive", ErrBadRequest)
 	}
 
-	dispatch, err := s.repo.GetByID(ctx, dispatchID)
+	dispatch, err := s.dispatchRepo.GetByID(ctx, dispatchID)
 	if err != nil {
 		return translateDispatchRepoErr(err)
 	}
@@ -115,8 +174,50 @@ func (s *serviceDispatch) DeleteByID(ctx context.Context, dispatchID int64) erro
 		return fmt.Errorf("%w: dispatch must be completed before deletion", ErrBadRequest)
 	}
 
-	if err := s.repo.DeleteByID(ctx, dispatchID); err != nil {
+	if err := s.dispatchRepo.DeleteByID(ctx, dispatchID); err != nil {
 		return translateDispatchRepoErr(err)
+	}
+	return nil
+}
+
+func (s *serviceDispatch) getVehicleByCallSign(ctx context.Context, callSign string) (entity.VehicleEntity, error) {
+	vehicle, err := s.vehicleRepo.GetByCallSign(ctx, callSign)
+	if err != nil {
+		return entity.VehicleEntity{}, translateRepoErr(err)
+	}
+	return vehicle, nil
+}
+
+func (s *serviceDispatch) ensureVehicleAvailable(ctx context.Context, callSign string) error {
+	vehicle, err := s.getVehicleByCallSign(ctx, callSign)
+	if err != nil {
+		return err
+	}
+	if vehicle.Status != string(model.AVAILABLE) {
+		return fmt.Errorf("%w: ambulance vehicle must be available", ErrBadRequest)
+	}
+	return nil
+}
+
+func (s *serviceDispatch) releaseVehicle(ctx context.Context, callSign string) error {
+	vehicle, err := s.getVehicleByCallSign(ctx, callSign)
+	if err != nil {
+		return err
+	}
+	return s.setVehicleStatusByID(ctx, vehicle.VehicleID, model.AVAILABLE)
+}
+
+func (s *serviceDispatch) setVehicleStatusByCallSign(ctx context.Context, callSign string, status model.VehicleStatus) error {
+	vehicle, err := s.getVehicleByCallSign(ctx, callSign)
+	if err != nil {
+		return err
+	}
+	return s.setVehicleStatusByID(ctx, vehicle.VehicleID, status)
+}
+
+func (s *serviceDispatch) setVehicleStatusByID(ctx context.Context, vehicleID int64, status model.VehicleStatus) error {
+	if _, err := s.vehicleRepo.UpdateStatusByID(ctx, vehicleID, string(status)); err != nil {
+		return translateRepoErr(err)
 	}
 	return nil
 }

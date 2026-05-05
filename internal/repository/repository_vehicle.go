@@ -19,6 +19,7 @@ type VehicleRepository interface {
 	List(ctx context.Context, status, station string) ([]entity.VehicleEntity, error)
 	Create(ctx context.Context, vehicle entity.VehicleEntity) (entity.VehicleEntity, error)
 	GetByID(ctx context.Context, vehicleID int64) (entity.VehicleEntity, error)
+	GetByCallSign(ctx context.Context, callSign string) (entity.VehicleEntity, error)
 	UpdateByID(ctx context.Context, vehicleID int64, vehicle entity.VehicleEntity) (entity.VehicleEntity, error)
 	UpdateStatusByID(ctx context.Context, vehicleID int64, status string) (entity.VehicleEntity, error)
 	DeleteByID(ctx context.Context, vehicleID int64) error
@@ -108,6 +109,19 @@ func (r *repositoryVehicle) Create(ctx context.Context, vehicle entity.VehicleEn
 func (r *repositoryVehicle) GetByID(ctx context.Context, vehicleID int64) (entity.VehicleEntity, error) {
 	var item entity.VehicleEntity
 	err := r.vehicles.FindOne(ctx, bson.M{"vehicleId": vehicleID}).Decode(&item)
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		return entity.VehicleEntity{}, ErrVehicleNotFound
+	}
+	if err != nil {
+		return entity.VehicleEntity{}, err
+	}
+
+	return item, nil
+}
+
+func (r *repositoryVehicle) GetByCallSign(ctx context.Context, callSign string) (entity.VehicleEntity, error) {
+	var item entity.VehicleEntity
+	err := r.vehicles.FindOne(ctx, bson.M{"callSign": callSign}).Decode(&item)
 	if errors.Is(err, mongo.ErrNoDocuments) {
 		return entity.VehicleEntity{}, ErrVehicleNotFound
 	}

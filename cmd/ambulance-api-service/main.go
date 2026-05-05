@@ -45,8 +45,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("Dispatch repository init failed: %v", err)
 	}
-	vehicleService := service.NewVehicleService(vehicleRepository)
-	dispatchService := service.NewDispatchService(dispatchRepository)
+	vehicleService := service.NewVehicleService(vehicleRepository, dispatchRepository)
+	dispatchService := service.NewDispatchService(dispatchRepository, vehicleRepository)
 	vehicleHandler := handler.NewVehicleManagementAPI(vehicleService)
 	dispatchHandler := handler.NewDispatchManagementAPI(dispatchService)
 
@@ -65,5 +65,7 @@ func main() {
 	})
 	// request routings
 	engine.GET("/openapi", api.HandleOpenApi)
-	engine.Run(":" + port)
+	if err := engine.Run(":" + port); err != nil {
+		log.Fatalf("server failed: %v", err)
+	}
 }

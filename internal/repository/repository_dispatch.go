@@ -22,6 +22,7 @@ type DispatchRepository interface {
 	GetByID(ctx context.Context, dispatchID int64) (entity.DispatchEntity, error)
 	UpdateByID(ctx context.Context, dispatchID int64, dispatch entity.DispatchEntity) (entity.DispatchEntity, error)
 	UpdateStatusByID(ctx context.Context, dispatchID int64, status string, updatedAt time.Time) (entity.DispatchEntity, error)
+	DeleteUnfinishedByVehicleCallSign(ctx context.Context, callSign string) error
 	DeleteByID(ctx context.Context, dispatchID int64) error
 }
 
@@ -68,7 +69,7 @@ func (r *repositoryDispatch) List(ctx context.Context, status, city string) ([]e
 	if err != nil {
 		return nil, err
 	}
-	defer cursor.Close(ctx)
+	defer func() { _ = cursor.Close(ctx) }()
 
 	items := make([]entity.DispatchEntity, 0)
 	for cursor.Next(ctx) {
@@ -149,6 +150,14 @@ func (r *repositoryDispatch) UpdateStatusByID(ctx context.Context, dispatchID in
 	}
 
 	return r.GetByID(ctx, dispatchID)
+}
+
+func (r *repositoryDispatch) DeleteUnfinishedByVehicleCallSign(ctx context.Context, callSign string) error {
+	_, err := r.dispatches.DeleteMany(ctx, bson.M{
+		"ambulanceCallSign": callSign,
+		"status":            bson.M{"$ne": "COMPLETED"},
+	})
+	return err
 }
 
 func (r *repositoryDispatch) DeleteByID(ctx context.Context, dispatchID int64) error {
