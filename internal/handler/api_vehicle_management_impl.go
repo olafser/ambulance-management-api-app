@@ -101,28 +101,6 @@ func (h *apiVehicleManagementImpl) VehiclesVehicleIdPut(c *gin.Context) {
 	c.JSON(http.StatusOK, item)
 }
 
-func (h *apiVehicleManagementImpl) VehiclesVehicleIdStatusPatch(c *gin.Context) {
-	id, err := parseVehicleID(c.Param("vehicleId"))
-	if err != nil {
-		respondWithBadRequest(c, err.Error())
-		return
-	}
-
-	var req model.VehicleStatusUpdateRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		respondWithBadRequest(c, "invalid status update payload")
-		return
-	}
-
-	item, err := h.vehicleService.UpdateStatusByID(c.Request.Context(), id, req)
-	if err != nil {
-		respondWithError(c, err)
-		return
-	}
-
-	c.JSON(http.StatusOK, item)
-}
-
 func parseVehicleID(raw string) (int64, error) {
 	id, err := strconv.ParseInt(raw, 10, 64)
 	if err != nil || id <= 0 {
