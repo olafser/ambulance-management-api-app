@@ -10,19 +10,6 @@ import (
 	"github.com/olafser/ambulance-management-api-app/internal/service"
 )
 
-func TestVehicleServiceUpdateStatusByID_RejectsChangeWhileOnMission(t *testing.T) {
-	svc := service.NewVehicleService(vehicleRepoStub{
-		getByIDFn: func(ctx context.Context, vehicleID int64) (entity.VehicleEntity, error) {
-			return entity.VehicleEntity{VehicleID: vehicleID, Status: string(model.ON_MISSION), CallSign: "A-101"}, nil
-		},
-	})
-
-	_, err := svc.UpdateStatusByID(context.Background(), 7, model.VehicleStatusUpdateRequest{Status: model.AVAILABLE})
-	if !errors.Is(err, service.ErrBadRequest) {
-		t.Fatalf("expected ErrBadRequest, got %v", err)
-	}
-}
-
 func TestVehicleServiceUpdateByID_RejectsStatusChangeWhileOnMission(t *testing.T) {
 	svc := service.NewVehicleService(vehicleRepoStub{
 		getByIDFn: func(ctx context.Context, vehicleID int64) (entity.VehicleEntity, error) {

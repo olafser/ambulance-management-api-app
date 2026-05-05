@@ -21,7 +21,6 @@ type VehicleService interface {
 	Create(ctx context.Context, req model.VehicleCreateRequest) (model.Vehicle, error)
 	GetByID(ctx context.Context, vehicleID int64) (model.Vehicle, error)
 	UpdateByID(ctx context.Context, vehicleID int64, req model.VehicleUpdateRequest) (model.Vehicle, error)
-	UpdateStatusByID(ctx context.Context, vehicleID int64, req model.VehicleStatusUpdateRequest) (model.Vehicle, error)
 	DeleteByID(ctx context.Context, vehicleID int64) error
 }
 
@@ -96,30 +95,6 @@ func (s *serviceVehicle) UpdateByID(ctx context.Context, vehicleID int64, req mo
 
 	entity := mapper.ToVehicleEntityFromUpdate(vehicleID, req)
 	updated, err := s.repo.UpdateByID(ctx, vehicleID, entity)
-	if err != nil {
-		return model.Vehicle{}, translateRepoErr(err)
-	}
-
-	return mapper.ToVehicleModel(updated), nil
-}
-
-func (s *serviceVehicle) UpdateStatusByID(ctx context.Context, vehicleID int64, req model.VehicleStatusUpdateRequest) (model.Vehicle, error) {
-	if vehicleID <= 0 {
-		return model.Vehicle{}, fmt.Errorf("%w: vehicleId must be positive", ErrBadRequest)
-	}
-	if !isValidStatus(req.Status) {
-		return model.Vehicle{}, fmt.Errorf("%w: invalid status value", ErrBadRequest)
-	}
-
-	current, err := s.repo.GetByID(ctx, vehicleID)
-	if err != nil {
-		return model.Vehicle{}, translateRepoErr(err)
-	}
-	if current.Status == string(model.ON_MISSION) && req.Status != model.VehicleStatus(current.Status) {
-		return model.Vehicle{}, fmt.Errorf("%w: vehicle status cannot be changed while on mission", ErrBadRequest)
-	}
-
-	updated, err := s.repo.UpdateStatusByID(ctx, vehicleID, string(req.Status))
 	if err != nil {
 		return model.Vehicle{}, translateRepoErr(err)
 	}

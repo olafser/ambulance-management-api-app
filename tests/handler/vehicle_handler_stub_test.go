@@ -46,13 +46,6 @@ func (s vehicleServiceStub) UpdateByID(ctx context.Context, vehicleID int64, req
 	return model.Vehicle{}, nil
 }
 
-func (s vehicleServiceStub) UpdateStatusByID(ctx context.Context, vehicleID int64, req model.VehicleStatusUpdateRequest) (model.Vehicle, error) {
-	if s.updateStatusFn != nil {
-		return s.updateStatusFn(ctx, vehicleID, req)
-	}
-	return model.Vehicle{}, nil
-}
-
 func (s vehicleServiceStub) DeleteByID(ctx context.Context, vehicleID int64) error {
 	if s.deleteByIDFn != nil {
 		return s.deleteByIDFn(ctx, vehicleID)
